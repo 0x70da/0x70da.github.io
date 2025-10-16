@@ -71,7 +71,7 @@ Te: trailers
 
 {"user_id":"{user_id}","team_id":"{team_id}"}
 ```
-But this request works to add members, and it requires the 'add_members' permission. So, the idea that came to mind was to try adding guests via this request. I changed the 'user_id' of the member user to the 'id' of the guest user, sent the request, and observed that the request succeeded, and the guest was added to the team, even though the member did not have the 'invite_guest' permission. This indicates that a server-side permission check was missing for that path.
+But this request works to add members, and it requires the `add_members` permission. So, the idea that came to mind was to try adding guests via this request. I changed the `user_id` of the member user to the 'id' of the guest user, sent the request, and observed that the request succeeded, and the guest was added to the team, even though the member did not have the `invite_guest` permission. This indicates that a server-side permission check was missing for that path.
 
 ---
 
@@ -99,10 +99,10 @@ But this request works to add members, and it requires the 'add_members' permiss
 7. **Observe**
    - The Guest is added to the team even though the Member role lacks `invite_guest`.
 
-8. **Conclusion**
-   - The UI and admin console enforce the permission for the usual invite flow, but a different API path (add existing user to team) lacked the same server-side check. This is a broken access control issue and lets Members effectively add Guests without permission.
+8. **Key Finding**
+   - The UI and admin console enforce the permission for the usual invite flow, but a different API path (add existing user to team) lacked the same server-side check (for adding guests). This is a broken access control issue and lets Members effectively add Guests without permission.
 
-### Here’s the short version:
+### Conclusion:
 - I revoked the `invite_guest` permission from a Member role.
 - I confirmed the normal “invite guest” feature was blocked `403 Forbidden`.
 - Later, I Observed another function: adding existing users (members) to a team.
