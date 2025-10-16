@@ -41,7 +41,6 @@ Accept: */*
 Accept-Language: en
 Accept-Encoding: gzip, deflate, br
 X-Requested-With: XMLHttpRequest
-X-Csrf-Token: 6bruxfbfdf89tpouy6s4iykggy
 Content-Type: application/json
 Content-Length: 79
 Sec-Fetch-Dest: empty
@@ -50,7 +49,7 @@ Sec-Fetch-Site: same-origin
 Priority: u=0
 Te: trailers
 
-{"user_id":"g4wkcwbbdpy93pniww1y76xncw","team_id":"skye3am5tpgi8eoyndhxiq7woe"}
+{"user_id":"{user_id}","team_id":"{team_id}"}
 ```
 but this request work if the member has permission to add members, so the one that came to my mind is changing the `user_id` of member user to id of Guest user, now i send the request and i observed that the request succeeded and the Guest was added to the team, even though the Member did not have the `invite_guest` permission. This shows a server side permission check was missing for that path.
 
