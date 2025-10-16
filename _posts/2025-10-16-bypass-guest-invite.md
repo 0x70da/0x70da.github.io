@@ -118,7 +118,7 @@ This means the permission check was only enforced in the main invite flow, and t
 ## Vulnerability classification
 - VRT: **Broken Access Control (BAC) → Privilege Escalation**  
 - Priority: **P3**
-
+  
 ![bug accepted](/../../screanshots/Screenshot 2025-10-16 182226.png)
 
 ### Thank You
