@@ -83,7 +83,8 @@ But this request works to add members, and it requires the `add_members` permiss
    - Create three accounts: **Admin**, **Member**, **Guest**.
 
 3. **Revoke the add guest permission**
-   - As Admin, remove the `invite_guest` permission from the Member role.
+   - As Admin, assign `add_members` permission to the Member role.
+   - But remove the `invite_guest` permission only.
 
 4. **Try add guest without permission to do that**
    - While logged in as the Member, try the normal invite guest flow in the UI.
