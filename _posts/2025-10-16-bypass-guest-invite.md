@@ -7,7 +7,7 @@ author: "0x70da"
 canonical_url: "https://0x70da.github.io/writeups/Members-Without-Guest-Invite-Permission-Can-Add-Guests-to-Teams.md"
 ---
 <p style="text-align:right;">
-  <a href="/" title="Back to Home" style="text-decoration:none; font-size: 22px;">
+  <a href="[/](https://0x70da.github.io)" title="Back to Home" style="text-decoration:none; font-size: 22px;">
     🏠 Home
   </a>
 </p>
