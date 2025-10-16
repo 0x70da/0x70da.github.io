@@ -1,5 +1,5 @@
 ---
-title: "Security Research & Vulnerability Writeups"
+title: "0x70da's Blog"
 ---
 
 # 👋 Welcome
