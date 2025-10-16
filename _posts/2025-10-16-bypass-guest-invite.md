@@ -7,7 +7,7 @@ author: "0x70da"
 canonical_url: "https://0x70da.github.io/writeups/Members-Without-Guest-Invite-Permission-Can-Add-Guests-to-Teams.md"
 ---
 <p style="text-align:left;">
-  <a href="0x70da.github.io" title="Back to Home" style="font-size: 24px; text-decoration: none;">
+  <a href="https://0x70da.github.io" title="Back to Home" style="font-size: 24px; text-decoration: none;">
     🏠Home
   </a>
 </p>
@@ -72,7 +72,7 @@ but this request work if the member has permission to add members, so the one th
 5. **Look for other related functions**
    - Notice that some users in the workspace are not assigned to any team (they can exist in the workspace but not be members of certain teams).
 
-6. **Test the function add existing user to team **
+6. **Test the function add existing user to team**
    - from the Member session, attempt the operation that adds an existing workspace user (member) to a team.
    - Change the id of target user (member) to id of any Guest user and send request.
 
