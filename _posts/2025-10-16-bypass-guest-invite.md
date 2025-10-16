@@ -5,6 +5,7 @@ date: 2025-10-16
 tags: [security, writeup, access-control, mattermost, privilege escalation, idor]
 author: "0x70da"
 canonical_url: "https://0x70da.github.io/writeups/Members-Without-Guest-Invite-Permission-Can-Add-Guests-to-Teams.md"
+excerpt: "How I found a guest-invite permission bypass while testing privilege escalation in a workspace environment."
 ---
 <p style="text-align:left;">
   <a href="https://0x70da.github.io" title="Back to Home" style="font-size: 24px; text-decoration: none;">
