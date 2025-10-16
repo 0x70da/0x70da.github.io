@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: "Members Without Guest Invite Permission Can Add Guests to Teams"
 date: 2025-10-16
 tags: [security, writeup, access-control, mattermost, privilege escalation, idor]
