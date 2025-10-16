@@ -15,6 +15,9 @@ excerpt: "How I bypass invite permission while testing privilege escalation."
 ---
 
 ## Introduction
+
+﷽
+
 Before I start testing any new program, I like to spend some time exploring how it works.  
 I look at the main features, the structure of the application, and any role-based functions it has.  
 In this case, the application was a workspace that allows admins to manage teams, permissions, and user roles.  
@@ -28,11 +31,28 @@ When I start hunting a new program I first learn its main functions. In this cas
 
 ![member permissions](/../../screanshots/Screenshot 2025-10-16 130610.png)
 
-As an admin I revoked the guest-invite permission for a Member. Using the UI, attempts to invite a guest returned `403 Forbidden` as expected. Later I noticed that workspace users can exist without being assigned to any team. 
+this is i found:
+
+- Admins can control what each role (Member or Guest) can do.  
+- Members can have permissions like *“Add Members”* and *“Invite Guests”*.  
+- These permissions can be turned on or off from the admin panel.
+
+However, I noticed something interesting: users can exist in the workspace **without being part of any team**. 
 
 ![User whithout team](/../../screanshots/Screenshot 2025-10-16 130826.png)
 
-That led me to test the separate function that *adds an existing workspace user to a team*. using this request:
+The application has **two separate functions** for adding users to teams:
+
+1. **Invite function** — used to invite a person who is not yet in the workspace (new member or guest). This path performs a permission check and will block a Member who lacks the `invite_guest` permission (returns `403 Forbidden`).
+
+2. **Add existing user to team function** — used to add users who already exist in the workspace but are not currently assigned to the team.
+
+When the Member role has permission to add *members* but not *guests*, the first (invite) flow is blocked correctly. However, the second flow (add existing user to team) does **not** enforce the same check when the target user is a Guest.
+
+I tested the “add existing user to team” API and found that by replacing the `user_id` (originally targeting a Member) with the ID of a Guest user, the request succeeded — the Guest was added to the team even though the Member did not have `invite_guest` permission. This indicates a server-side missing permission check on that path.
+
+
+This is request for *adding an existing workspace user to a team*:
 
 ```http
 POST /teams/{team_id}/members HTTP/2
