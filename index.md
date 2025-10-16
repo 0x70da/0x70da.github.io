@@ -14,3 +14,15 @@ Each post aims to:
 
 🚨 **Disclaimer:** All content here is for educational and research purposes only.  
 I do not endorse or support any illegal activity.
+
+# Latest writeups
+
+<ul>
+  {% for post in site.posts limit:10 %}
+    <li>
+      <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+      <small> — {{ post.date | date: "%Y-%m-%d" }}</small>
+      <p>{{ post.excerpt | strip_html | truncate: 160 }}</p>
+    </li>
+  {% endfor %}
+</ul>
