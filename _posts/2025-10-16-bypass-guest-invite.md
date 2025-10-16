@@ -6,11 +6,13 @@ tags: [security, writeup, access-control, mattermost, privilege escalation, idor
 author: "0x70da"
 canonical_url: "https://0x70da.github.io/writeups/Members-Without-Guest-Invite-Permission-Can-Add-Guests-to-Teams.md"
 ---
-<p style="text-align:right;">
-  <a href="https://0x70da.github.io" title="Back to Home" style="text-decoration:none; font-size: 22px;">
-    🏠 Home
-  </a>
-</p>
+## Introduction
+Before I start testing any new program, I like to spend some time exploring how it works.  
+I look at the main features, the structure of the application, and any role-based functions it has.  
+In this case, the application was a workspace that allows admins to manage teams, permissions, and user roles.  
+
+My goal at the beginning was simple: understand how permissions are enforced for different roles (Admin, Member, Guest).  
+I explored the admin dashboard, checked which actions each role could perform, and then focused on privilege escalation scenarios especially actions that a **Member** could or could not do.
 
 
 ## Summary
