@@ -6,6 +6,12 @@ tags: [security, writeup, access-control, mattermost, privilege escalation, idor
 author: "0x70da"
 canonical_url: "https://0x70da.github.io/writeups/Members-Without-Guest-Invite-Permission-Can-Add-Guests-to-Teams.md"
 ---
+<p style="text-align:right;">
+  <a href="/" title="Back to Home" style="font-size: 24px; text-decoration: none;">
+    🏠
+  </a>
+</p>
+---
 ## Introduction
 Before I start testing any new program, I like to spend some time exploring how it works.  
 I look at the main features, the structure of the application, and any role-based functions it has.  
@@ -75,4 +81,13 @@ by changing the `user_id` of member user to a Guest user, the request succeeded 
 8. **Conclusion**
    - The UI and admin console enforce the permission for the usual invite flow, but a different API path (add existing user to team) lacked the same server-side check. This is a broken access control issue and lets Members effectively add Guests without permission.
 
+###Here’s the short version:
+- I revoked the `invite_guest` permission from a Member role.
+- I confirmed the normal “invite guest” feature was blocked `403 Forbidden`.
+- Later, I tested another function: adding existing users (members) to a team.
+- And when i change the `user_id` to guest user, the request is successed.
+- The Member could add a Guest user successfully even though they shouldn’t have permission.
+
+This means the permission check was only enforced in the main invite flow, not at the API level for adding users to teams.  
+This kind of bypass is a good example of **broken access control**.
 ---
