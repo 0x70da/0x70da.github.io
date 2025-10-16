@@ -71,7 +71,7 @@ Te: trailers
 
 {"user_id":"{user_id}","team_id":"{team_id}"}
 ```
-but this request work to add members and it requires `add_members` permission, so the one that came to my mind is tring to add guests via this request,and i changed the `user_id` of member user to id of Guest user, now i send the request and i observed that the request succeeded and the Guest was added to the team, even though the Member did not have the `invite_guest` permission. This shows a server side permission check was missing for that path.
+But this request works to add members, and it requires the 'add_members' permission. So, the idea that came to mind was to try adding guests via this request. I changed the 'user_id' of the member user to the 'id' of the guest user, sent the request, and observed that the request succeeded, and the guest was added to the team, even though the member did not have the 'invite_guest' permission. This indicates that a server-side permission check was missing for that path.
 
 ---
 
@@ -118,6 +118,8 @@ This means the permission check was only enforced in the main invite flow, and t
 ## Vulnerability classification
 - VRT: **Broken Access Control (BAC) → Privilege Escalation**  
 - Priority: **P3**
+
+![bug accepted](/../../screanshots/Screenshot 2025-10-16 182226.png)
 
 ### Thank You
 Thank you for reading my write-up. I hope this helps others understand how small differences in permission enforcement can lead to privilege escalation vulnerabilities.
