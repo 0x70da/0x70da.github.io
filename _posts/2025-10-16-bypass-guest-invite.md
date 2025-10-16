@@ -43,11 +43,11 @@ However, I noticed something interesting: users can exist in the workspace **wit
 
 The application has **two separate functions** for adding users to teams:
 
-1. **Invite function** — used to invite a person who is not yet in the workspace (new member or guest). This path performs a permission check and will block a Member who lacks the `invite_guest` permission (returns `403 Forbidden`).
+1. **Invite function** — used to invite a person who is not yet in the workspace (new member or guest). 
 
 2. **Add existing user to team function** — used to add users who already exist in the workspace but are not currently assigned to the team.
 
-When the Member role has permission to add *members* but not *guests*, the first (invite) flow is blocked correctly.
+When the Member role hasn't permission to add *guests*, the first (invite) flow is blocked correctly (returns `403 Forbidden`) when i tried to invite guests, This path performs a permission check and will block a Member who lacks the `invite_guest` permission.
 
 So i decided to test the “add existing user to team function”.
 
@@ -119,7 +119,6 @@ This means the permission check was only enforced in the main invite flow, and t
 - VRT: **Broken Access Control (BAC) → Privilege Escalation**  
 - Priority: **P3**
 
-### Thank You 🙏
+### Thank You
 Thank you for reading my write-up. I hope this helps others understand how small differences in permission enforcement can lead to privilege escalation vulnerabilities.
-If you found this helpful, feel free to share or reach out!
 ---
