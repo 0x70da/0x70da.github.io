@@ -8,43 +8,52 @@ canonical_url: "https://0x70da.github.io/writeups/Members-Without-Guest-Invite-P
 ---
 
 ## Summary
-A privilege escalation / broken access control issue allowed regular workspace members — even after the `invite_guest` permission was revoked — to add guest users to specific teams. This bypass of role-based restrictions violates the principle of least privilege and permitted unauthorized access to resources scoped to teams.
+When I start hunting a new program I first learn its main functions. In this case the app is a workspace with teams and an admin dashboard that manages roles and permissions. While testing privilege escalation, I saw that the **Member** role can have permissions like *add members* and *add guests*, and those permissions can be revoked by an admin.
 
+As an admin I revoked the guest-invite permission for a Member. Using the UI, attempts to invite a guest returned `403 Forbidden` as expected. Later I noticed that workspace users can exist without being assigned to any team. That led me to test the separate function that *adds an existing workspace user to a team*. In my lab, I tried that add-to-team flow from a Member account: by changing the target user to a Guest account, the request succeeded and the Guest was added to the team — even though the Member did not have the `invite_guest` permission. This shows a server-side permission check was missing for that path.
 
----
-
-## Vulnerability classification
-- VRT: **Broken Access Control (BAC) → Privilege Escalation**  
-- Priority: **P3**
+> All testing described here was done only in an isolated test environment (sandbox/staging). Do not run these steps against production systems without written permission.
 
 ---
 
-## Impact
-- Members who should not have the ability to invite guests were able to add guest accounts to teams.  
-- This leads to unauthorized access to team channels and resources that were intended to be restricted.  
-- Business impact includes data exposure risk, unauthorized collaboration, and possible lateral movement depending on guest privileges.
+## Steps I followed (simple, safe)
+1. **Learn the app**
+   - Open the admin dashboard and inspect roles, teams, and permission settings to see what actions are controllable (for example: add members, invite guests).
+
+2. **Set up a lab**
+   - Use a sandbox or staging instance.
+   - Create three accounts: **Admin**, **Member**, **Guest**.
+
+3. **Revoke the guest-invite permission**
+   - As Admin, remove the `invite_guest` permission from the Member role.
+   - Verify the admin console shows the permission revoked.
+
+4. **Check the UI behavior**
+   - While logged in as the Member, try the normal invite flow in the UI.
+   - The UI path correctly returns `403 Forbidden` and blocks the invite.
+
+5. **Look for other related functions**
+   - Notice that some users in the workspace are not assigned to any team (they can exist in the workspace but not be members of certain teams).
+   - Map the client-side network traffic to find the API endpoints the UI uses for team membership (use DevTools to *observe only*).
+
+6. **Test the add-existing-user-to-team flow (lab only)**
+   - In the sandbox, from the Member session, attempt the operation that adds an existing workspace user to a team.
+   - Use safe, controlled requests in your test environment (do not expose real cookies/keys).
+   - Change the target user to a Guest account and perform the add-to-team action.
+
+7. **Observe the result**
+   - The Guest is added to the team even though the Member role lacks `invite_guest`.
+   - Capture sanitized evidence: admin-perms screenshot, team membership screenshot, server logs (redacted).
+
+8. **Conclusion**
+   - The UI and admin console enforce the permission for the usual invite flow, but a different API path (add existing user to team) lacked the same server-side check. This is a broken access control issue and lets Members effectively add Guests without permission.
 
 ---
 
-## Root cause (high level)
-The server-side enforcement of the `invite_guest` permission was incomplete for the team-membership API. Although workspace-level permission settings in the admin console could remove the `invite_guest` capability for member-role users, the API endpoint that adds members to a team did not verify the caller’s effective permission correctly — allowing members to perform an operation that should have been prohibited.
+## Short mitigation notes for developers
+- Enforce permission checks on the **server** for every endpoint that adds or invites users. Do not rely on the UI to enforce permissions.
+- Centralize authorization: route all membership/invite operations through one authorization helper.
+- Add tests that cover revoked-permission scenarios and expect `403 Forbidden` where appropriate.
+- Log permission checks and failures clearly.
 
 ---
-
-## Safe reproduction (for testers / developers)
-> **Important:** Do **not** execute any of these steps against systems you do not own or have explicit written permission to test. Run the steps only on a local instance, a staging environment, or an authorized target.
-
-1. **Prepare a test environment**
-   - Create three accounts:
-     - *Admin* — with full admin privileges.
-     - *Member* — the role you will restrict.
-     - *Guest* — an account that should only become a member of a team if invited by an authorized role.
-
-2. **Configure permissions**
-   - As *Admin*, go to the admin console → User Management → Permissions → System Scheme (or equivalent) and **revoke** the `invite_guest` permission from the *Member* role.
-
-3. **Invite and join**
-   - Have the *Admin* invite the *Member* (or invite the *Member* through a normal workflow) and ensure the *Member* accepts and is a regular member (not admin).
-
-4. **Gather identifiers (for testing only)**
-   - From the test instance, list users to obtain the internal user IDs and list teams to obtain team IDs. (Use admin-level API or the test UI; do not ex
