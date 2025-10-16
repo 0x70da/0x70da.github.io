@@ -95,7 +95,7 @@ But this request works to add members, and it requires the `add_members` permiss
 
 6. **Test the function add existing user to team**
    - from the Member session, attempt the operation that adds an existing workspace user (member) to a team.
-   - Change the id of target user (member) to id of any Guest user and send request.
+   - Change the id of user (member) to id of any Guest user and send request.
 
 7. **Observe**
    - The Guest is added to the team even though the Member role lacks `invite_guest`.
