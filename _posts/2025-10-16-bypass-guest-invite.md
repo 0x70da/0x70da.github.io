@@ -47,9 +47,9 @@ The application has **two separate functions** for adding users to teams:
 
 2. **Add existing user to team function** — used to add users who already exist in the workspace but are not currently assigned to the team.
 
-When the Member role has permission to add *members* but not *guests*, the first (invite) flow is blocked correctly. However, the second flow (add existing user to team) does **not** enforce the same check when the target user is a Guest.
+When the Member role has permission to add *members* but not *guests*, the first (invite) flow is blocked correctly.
 
-I tested the “add existing user to team” API and found that by replacing the `user_id` (originally targeting a Member) with the ID of a Guest user, the request succeeded — the Guest was added to the team even though the Member did not have `invite_guest` permission. This indicates a server-side missing permission check on that path.
+So i decided to test the “add existing user to team function”.
 
 
 This is request for *adding an existing workspace user to a team*:
@@ -105,10 +105,21 @@ but this request work if the member has permission to add members, so the one th
 ### Here’s the short version:
 - I revoked the `invite_guest` permission from a Member role.
 - I confirmed the normal “invite guest” feature was blocked `403 Forbidden`.
-- Later, I tested another function: adding existing users (members) to a team.
+- Later, I Observed another function: adding existing users (members) to a team.
 - And when i change the `user_id` to guest user, the request is successed.
 - The Member could add a Guest user successfully even though they shouldn’t have permission.
 
 This means the permission check was only enforced in the main invite flow, and the API level check if the member can add another members teams,  but it isn't check the invite permission even if when the target user is guest. 
 
+## Impact:
+- A Member can add Guest users to teams even when the Member role does not have the invite_guest permission.
+- This can lead to unauthorized access to teams and potentially to sensitive information or resources that Guests gain by being added.
+
+## Vulnerability classification
+- VRT: **Broken Access Control (BAC) → Privilege Escalation**  
+- Priority: **P3**
+
+### Thank You 🙏
+Thank you for reading my write-up. I hope this helps others understand how small differences in permission enforcement can lead to privilege escalation vulnerabilities.
+If you found this helpful, feel free to share or reach out!
 ---
