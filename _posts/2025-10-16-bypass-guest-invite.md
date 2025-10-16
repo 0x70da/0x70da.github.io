@@ -1,10 +1,4 @@
 ---
-<p style="text-align:right;">
-  <a href="/" title="Back to Home" style="text-decoration:none; font-size: 22px;">
-    🏠 Home
-  </a>
-</p>
-
 layout: default
 title: "Members Without Guest Invite Permission Can Add Guests to Teams"
 date: 2025-10-16
@@ -12,7 +6,11 @@ tags: [security, writeup, access-control, mattermost, privilege escalation, idor
 author: "0x70da"
 canonical_url: "https://0x70da.github.io/writeups/Members-Without-Guest-Invite-Permission-Can-Add-Guests-to-Teams.md"
 ---
-
+<p style="text-align:right;">
+  <a href="/" title="Back to Home" style="text-decoration:none; font-size: 22px;">
+    🏠 Home
+  </a>
+</p>
 ## Summary
 When I start hunting a new program I first learn its main functions. In this case the app is a workspace with teams and an admin dashboard that manages roles and permissions. While testing privilege escalation, I saw that the **Member** role can have permissions like *add members* and *add guests*, and those permissions can be revoked by an admin.
 
