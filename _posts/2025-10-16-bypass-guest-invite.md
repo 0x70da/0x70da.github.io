@@ -27,14 +27,14 @@ I explored the admin dashboard, checked which actions each role could perform, a
 
 
 ## Summary
-When I start hunting a new program I first learn its main functions. In this case the app is a workspace with teams and an admin dashboard that manages roles and permissions. While testing privilege escalation, I saw that the **Member** role can have permissions like *add members* and *add guests*, and those permissions can be revoked by an admin.
+When I start hunting a new program I first learn its main functions. In this case the app is a workspace with teams and an admin dashboard that manages roles and permissions. While testing privilege escalation, I saw that the **Member** role can have permissions like `add_members` and `add_guests`, and those permissions can be revoked by an admin.
 
 ![member permissions](/../../screanshots/Screenshot 2025-10-16 130610.png)
 
 this is i found:
 
 - Admins can control what each role (Member or Guest) can do.  
-- Members can have permissions like *“Add Members”* and *“Invite Guests”*.  
+- Members can have permissions like `add_members` and `add_guests`.  
 - These permissions can be turned on or off from the admin panel.
 
 However, I noticed something interesting: users can exist in the workspace **without being part of any team**. 
@@ -71,7 +71,7 @@ Te: trailers
 
 {"user_id":"{user_id}","team_id":"{team_id}"}
 ```
-but this request work if the member has permission to add members, so the one that came to my mind is changing the `user_id` of member user to id of Guest user, now i send the request and i observed that the request succeeded and the Guest was added to the team, even though the Member did not have the `invite_guest` permission. This shows a server side permission check was missing for that path.
+but this request work to add members and it requires `add_members` permission, so the one that came to my mind is tring to add guests via this request,and i changed the `user_id` of member user to id of Guest user, now i send the request and i observed that the request succeeded and the Guest was added to the team, even though the Member did not have the `invite_guest` permission. This shows a server side permission check was missing for that path.
 
 ---
 
@@ -112,7 +112,7 @@ but this request work if the member has permission to add members, so the one th
 This means the permission check was only enforced in the main invite flow, and the API level check if the member can add another members teams,  but it isn't check the invite permission even if when the target user is guest. 
 
 ## Impact:
-- A Member can add Guest users to teams even when the Member role does not have the invite_guest permission.
+- A Member can add Guest users to teams even when the Member role does not have the `invite_guest` permission.
 - This can lead to unauthorized access to teams and potentially to sensitive information or resources that Guests gain by being added.
 
 ## Vulnerability classification
@@ -121,4 +121,5 @@ This means the permission check was only enforced in the main invite flow, and t
 
 ### Thank You
 Thank you for reading my write-up. I hope this helps others understand how small differences in permission enforcement can lead to privilege escalation vulnerabilities.
+
 ---
