@@ -2,9 +2,9 @@
 layout: default
 title: "Your New Writeup Title"
 date: 2026-04-13
-tags: [security, writeup, bugbounty, access-control]
+tags: [security, writeup, bugbounty, jwt]
 author: "0x70da"
-canonical_url: "https://0x70da.github.io/writeups/your-new-writeup.md"
+canonical_url: "https://0x70da.github.io/_posts/2026-04-13-JWT-Attacks-Complete-Web-Security-Writeup.md"
 excerpt: "Short description of the vulnerability."
 ---
 <p style="text-align:left;">
@@ -13,8 +13,6 @@ excerpt: "Short description of the vulnerability."
   </a>
 </p>
 ---
-
-## Introduction
 
 ## 1. What is JWT?
 
