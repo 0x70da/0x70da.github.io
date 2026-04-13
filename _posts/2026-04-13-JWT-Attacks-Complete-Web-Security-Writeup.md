@@ -14,7 +14,7 @@ excerpt: "A complete guide to JSON Web Token attacks — from how JWT works to e
 </p>
 ---
 
-# JWT Attacks — Complete Web Security Writeup
+﷽
 ---
 
 ## 1. What is JWT?
