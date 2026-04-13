@@ -7,15 +7,14 @@ author: "0x70da"
 canonical_url: "https://0x70da.github.io/writeups/your-new-writeup.md"
 excerpt: "Short description of the vulnerability."
 ---
-
 <p style="text-align:left;">
-  <a href="https://0x70da.github.io">🏠Home</a>
+  <a href="https://0x70da.github.io" title="Back to Home" style="font-size: 24px; text-decoration: none;">
+    🏠Home
+  </a>
 </p>
-
 ---
 
-# JWT Attacks — Complete Web Security Writeup
----
+## Introduction
 
 ## 1. What is JWT?
 
