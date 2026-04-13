@@ -5,7 +5,7 @@ date: 2026-04-13
 tags: [security, writeup, bugbounty, jwt]
 author: "0x70da"
 canonical_url: "https://0x70da.github.io/_posts/2026-04-13-JWT-Attacks-Complete-Web-Security-Writeup.md"
-excerpt: "Short description of the vulnerability."
+excerpt: "A complete guide to JSON Web Token attacks — from how JWT works to every major vulnerability class."
 ---
 <p style="text-align:left;">
   <a href="https://0x70da.github.io" title="Back to Home" style="font-size: 24px; text-decoration: none;">
@@ -14,9 +14,12 @@ excerpt: "Short description of the vulnerability."
 </p>
 ---
 
+# JWT Attacks — Complete Web Security Writeup
+---
+
 ## 1. What is JWT?
 
-**JWT (JSON Web Token)** is an open standard (RFC 7519) for transmitting information between parties as a compact, self-contained token.
+**JWT (JSON Web Token)** is used instead of a session ID. It is used for authentication and authorization, and it may appear in the `Cookie` header or the `Authorization` header.
 
 Before JWT existed, web applications used **session-based authentication**. Here is how that worked:
 
@@ -30,7 +33,8 @@ Before JWT existed, web applications used **session-based authentication**. Here
 
 The problem with this approach is **scalability**. If you have multiple servers behind a load balancer, server A created your session but server B has no idea who you are. You need a shared session store, which adds complexity and a single point of failure.
 
-JWT solves this with a different idea: **instead of storing user state on the server, encode it directly into the token and give it to the client**. The server does not store anything. When the client sends the token back, the server just verifies the cryptographic signature to confirm the token is legitimate, then reads the user's information directly from the token. This is called **stateless authentication**.
+JWT solves this differently. **Instead of storing anything on the server, all the user's information is encoded directly into the token and sent to the client.** When the client sends the token back, the server just verifies the cryptographic signature to confirm nothing was changed, then reads the user's information from the token directly. The server stores nothing. This is called **stateless authentication**.
+
 
 ### Where JWTs Appear
 
@@ -75,6 +79,8 @@ At first glance it looks like random text, but it has a precise structure. It co
 
 Each part is independently **Base64URL encoded**. Base64URL is a variant of Base64 that replaces `+` with `-` and `/` with `_`, and removes padding `=` characters, making it safe for use in URLs and HTTP headers.
 
+Base64URL is just a way to represent binary data as plain text so it can be safely sent in HTTP headers and URLs.
+
 ---
 
 ### Part 1 — The Header
@@ -89,8 +95,9 @@ Decode it from Base64URL and you get:
   "typ": "JWT"
 }
 ```
+The header 
 
-The header is a JSON object that describes the token itself — its type and how it was signed. The fields are:
+The header is a JSON object that describes the token itself — its type and how it was signed (contains general information about the token). The fields are:
 
 **`alg` (Algorithm)** — tells the server which algorithm was used to create the signature. This is critical: every JWT attack that involves forging a token must either match this algorithm or trick the server into accepting a different one. Common values:
 
@@ -112,8 +119,7 @@ The header is a JSON object that describes the token itself — its type and how
 | `kid` | Key ID | Tells the server which key to use when multiple keys exist |
 | `jwk` | JSON Web Key | Embeds the public key directly in the header |
 | `jku` | JWK Set URL | A URL where the server should fetch the public key |
-| `x5u` | X.509 URL | URL to an X.509 certificate chain |
-| `x5c` | X.509 Chain | Embeds the certificate chain directly |
+
 
 > ⚠️ The optional parameters `kid`, `jwk`, and `jku` are the most dangerous. If the server trusts attacker-controlled values in these fields without strict validation, it can be tricked into using an attacker-supplied key to verify the token.
 
@@ -135,7 +141,7 @@ Decode it and you get:
 }
 ```
 
-The payload is a JSON object containing **claims** — statements about the user and the token. There are three categories:
+The payload is a JSON object containing **claims** — statements about the user and the token (contains the information about the user — for example their email, ID, phone, and role. What is included depends on the application). There are three categories:
 
 **Registered claims** — standardized, defined in RFC 7519. Servers are expected to validate these:
 
@@ -161,11 +167,11 @@ You can verify this right now. Copy any JWT and paste it into [jwt.io](https://j
 
 ### Part 3 — The Signature
 
-The signature is the security mechanism that prevents tampering. It is **not** encoded JSON — it is a raw cryptographic value.
+The signature is used to ensure that the header and payload have not been changed.
 
-How it is created depends on the algorithm:
+To create the signature, the server takes the encoded header and the encoded payload, combines them, and encrypts the result using the key and algorithm. This produces a unique value tied to that exact header and payload.
 
-**For `HS256` (symmetric):**
+**For `HS256` (symmetric — same key signs and verifies):**
 
 ```
 signature = HMACSHA256(
@@ -178,7 +184,7 @@ The server takes the raw text of `header.payload`, runs it through HMAC-SHA256 u
 
 The key insight: with HS256, **the same key both signs and verifies**. This means if an attacker learns the key, they can forge any token.
 
-**For `RS256` (asymmetric):**
+**For `RS256` (asymmetric — different keys sign and verify):**
 
 ```
 signature = RSASHA256(
@@ -194,6 +200,8 @@ verification = RSASHA256(
 
 The server signs with the private key (which it never shares) and verifies with the public key (which anyone can have). This is the basis of the algorithm confusion attack: if the server can be made to use the public key as an HS256 secret, an attacker who knows the public key can forge tokens.
 
+If even one character in the header or payload is changed, the signature will not match, and the server will reject the token.
+
 **What the signature actually protects:**
 
 The signature covers `base64url(header) + "." + base64url(payload)`. If you change a single byte in either the header or the payload, the signature computed by the server will not match the signature in the token, and the server will reject it.
@@ -202,6 +210,21 @@ This is why every attack on JWT either:
 1. Tricks the server into not checking the signature at all
 2. Tricks the server into using a key the attacker controls
 3. Gives the attacker the signing key so they can re-sign after modification
+
+---
+
+---
+
+## How JWT Works (Full Flow)
+
+1. The user logs in by sending their username and password to the server
+2. The server verifies the credentials
+3. The server builds the header and payload, then signs them using the secret or private key to generate the JWT
+4. The server sends the JWT back to the client
+5. The client stores the token (in a cookie or local storage) and sends it with every request
+6. When the server receives a request with a JWT, it decodes the signature and verifies that it matches the header and payload
+7. If the signature matches — the token is valid, nothing was changed, and the server trusts the payload
+8. If the signature does not match — the header or payload was changed after signing, and the server rejects the request
 
 ---
 
@@ -240,7 +263,7 @@ The security model depends entirely on steps 2–4 of the second request. Every 
 
 ### Concept
 
-Some servers decode the JWT to read its payload but **never actually verify the signature**. This means an attacker can modify any claim in the payload (e.g., change `"role": "user"` to `"role": "admin"`) and the server will accept it as legitimate, because it never checks if the signature is valid for the modified data.
+The server may decode the JWT and read the payload but never actually verify the signature. This means the attacker can change the payload (for example change `"role": "user"` to `"role": "admin"`), leave the old signature as it is, and the server will accept the request because it never checks if the signature is valid.
 
 ### Why It Happens
 
@@ -263,29 +286,14 @@ const payload = jwt.verify(token, secretKey);
 
 The same mistake exists in Python, Go, and every other language. The function names differ but the concept is the same.
 
-### Exploitation
 
-**Step 1:** Log in to the application and capture your JWT from the `Authorization` header or cookie.
+### How to Exploit
 
-**Step 2:** Decode the payload. Paste it into [jwt.io](https://jwt.io) or use Burp's JWT Editor extension. You will see something like:
-
-```json
-{
-  "sub": "user123",
-  "role": "user",
-  "exp": 1700000000
-}
-```
-
-**Step 3:** Identify the claim that controls your privilege or identity. Common targets:
-- `role` — change `"user"` to `"admin"` or `"administrator"`
-- `sub` — change to another user's ID for horizontal privilege escalation
-- `isAdmin` — change `false` to `true`
-- `email` — change to another user's email if that is used as the identifier
-
-**Step 4:** Modify the claim in Burp's JWT Editor. Do **not** change the signature — leave it exactly as it was (or fill it with random characters).
-
-**Step 5:** Forward the modified request and observe whether the server accepts it.
+1. Capture your JWT from the request
+2. Decode the payload using Burp's JWT Editor extension or jwt.io
+3. Change the claim you want — for example `"role": "user"` → `"role": "administrator"`, or change `"sub"` to another user's ID
+4. Leave the signature exactly as it was — do not touch it
+5. Send the modified token and observe if the server accepts it
 
 If the server accepts a token with a completely invalid signature, it is not verifying at all.
 
@@ -303,7 +311,9 @@ If the server accepts a token with a completely invalid signature, it is not ver
 
 The JWT specification defines a special algorithm value: `"alg": "none"`. It means the token is intentionally unsigned — no signature is needed and no verification should be performed. It was designed for cases where integrity is guaranteed by other means (e.g., a direct TLS connection between trusted services).
 
-The problem: many JWT libraries implement support for `none` and some servers do not explicitly disable it. An attacker can change the `alg` to `none`, strip the signature, modify the payload freely, and the server accepts it.
+The problem: many JWT libraries implement support for `none` and some servers do not explicitly disable it.
+
+An attacker changes the `alg` parameter in the header to `none`, removes the signature entirely, and modifies the payload freely. The server may read the `alg` field and — seeing that it is `none` — skip signature verification entirely, treating the payload as trusted.
 
 ### Why It Exists
 
@@ -668,101 +678,110 @@ This returns `mysecretkey` as the signing key.
 
 ---
 
-## 10. Attack 7 — Algorithm Confusion (RS256 → HS256)
+## Attack 7 — Algorithm Confusion (RS256 → HS256)
 
-### Concept
+To understand this attack you first need to clearly understand the difference between the two algorithm types:
 
-This is one of the most technically elegant JWT attacks. It exploits a fundamental difference between how RS256 and HS256 handle keys.
+| Algorithm | Signs with | Verifies with |
+|-----------|-----------|---------------|
+| RS256 (asymmetric) | Private key — kept secret on the server, never shared | Public key — shared openly, anyone can have it |
+| HS256 (symmetric) | Secret key | The exact same secret key |
 
-| Algorithm | Signing Key | Verification Key |
-|-----------|------------|-----------------|
-| RS256 (asymmetric) | Private key — kept secret | Public key — shared openly |
-| HS256 (symmetric) | Secret key | Same secret key |
+With RS256, the server has two keys: a **private key** it uses to sign tokens, and a **public key** it uses to verify them. The public key is not sensitive — it is designed to be shared. You can often find it at endpoints like `/.well-known/jwks.json`.
 
-The attack works as follows: if a server uses RS256 but its verification code can also accept HS256 (i.e., it trusts the `alg` value from the token header), an attacker can:
+With HS256, there is only **one key**, and it is used for both signing and verifying. This key must be kept secret.
 
-1. Obtain the server's **RSA public key** — this is not a secret; it is meant to be public
-2. Change the `alg` in the JWT header from `RS256` to `HS256`
-3. Use the RSA public key as the HMAC secret to sign the modified token
-4. Send the token to the server
+---
 
-The server reads `"alg": "HS256"` from the header, switches to HMAC verification, and uses its RSA public key as the HMAC secret (because that is the key it has available). Since the attacker also used the public key as the HMAC secret, the signature matches. The server accepts the forged token.
+### The Confusion
 
-### Why This Works
+Now imagine a vulnerable server that originally uses RS256. Its verification code looks something like this:
 
-The confused server performs:
-
-```
-expected_signature = HMACSHA256(header.payload, rsa_public_key)
+```python
+# VULNERABLE — the algorithm is read from the token header
+algorithm = jwt.get_unverified_header(token)["alg"]
+jwt.decode(token, public_key, algorithms=[algorithm])
 ```
 
-The attacker also computed:
+The problem: the server reads the `alg` value from the token header — which the attacker controls — and uses it to decide how to verify the token. The server always passes its `public_key` as the verification key regardless of the algorithm.
+
+Now the attacker does this:
+
+1. Changes `"alg"` in the header from `RS256` to `HS256`
+2. Signs the modified token using the server's RSA **public key** as the HMAC secret
+
+The server receives the token, reads `"alg": "HS256"`, and thinks: *"okay, this is HMAC — I need to verify it using my key."* It passes its `public_key` into the HMAC verification function. But that is exactly the same key the attacker used to sign the token. So the signature matches perfectly, and the server accepts the forged token.
+
+The attacker won — not by stealing the private key, but by tricking the server into using its own public key in a way it was never supposed to be used.
 
 ```
-attacker_signature = HMACSHA256(header.payload, rsa_public_key)
+Normal RS256 flow:
+  Server signs with:    private_key  (secret)
+  Server verifies with: public_key   (known)
+
+Confused HS256 flow:
+  Attacker signs with:  public_key   (known — attacker has this)
+  Server verifies with: public_key   (same key — signature matches!)
 ```
 
-They are identical. The server sees a valid signature and accepts the token.
+The fix is one line — the algorithm must be hardcoded on the server, never read from the token:
 
-The root cause: the server trusts the `alg` claim in the token header and switches verification algorithm based on it, rather than having the algorithm hardcoded on the server side.
+```python
+# SECURE — algorithm is hardcoded, the token header value is ignored
+jwt.decode(token, public_key, algorithms=["RS256"])
+```
 
-### Exploitation — Public Key is Exposed
+---
 
-**Step 1:** Find the server's RSA public key. Common locations:
+### How to Exploit — Public Key is Available
+
+The public key is not a secret. Check these common locations first:
+
 - `/.well-known/jwks.json`
 - `/oauth/jwks`
 - `/api/v1/jwks`
 - The application's GitHub repository
-- Response headers on certain endpoints
+- Embedded in the application's JavaScript files
 
-**Step 2:** Extract the public key in PEM format. If you have it in JWK format (from a JWKS endpoint), convert it to PEM. Burp's JWT Editor can do this — import the JWK and export as PEM.
+**Step 1:** Get the public key. If it is in JWK format (a JSON object from a JWKS endpoint), you need to convert it to PEM format. Burp's JWT Editor extension can do this — copy the JWK, import it into the JWT Editor Keys tab, then export as PEM.
 
-**Step 3:** Convert the PEM to Base64 to use as the symmetric key secret:
+**Step 2:** The server stores the PEM internally as a string. You need to encode that exact PEM string to Base64 to use it as the HMAC secret:
 
 ```bash
 cat public_key.pem | base64 | tr -d '\n'
 ```
 
-**Step 4:** In Burp JWT Editor, create a **New Symmetric Key**. Paste the Base64-encoded PEM into the `k` field. Save the key.
+The reason you encode the PEM (and not just the raw key bytes) is that the server's JWT library likely loaded the key from the PEM file as-is, so when it passes it to the HMAC function, it passes the full PEM string including the `-----BEGIN PUBLIC KEY-----` headers. You need to match that exactly.
 
-**Step 5:** In your captured JWT, change the `alg` in the header from `RS256` to `HS256`.
+**Step 3:** In Burp JWT Editor, go to JWT Editor Keys → New Symmetric Key. In the `k` field, paste the Base64-encoded PEM from Step 2. Save the key.
 
-**Step 6:** Modify the payload (change role, user ID, etc.).
+**Step 4:** In your captured JWT, change `"alg"` in the header from `RS256` to `HS256`.
 
-**Step 7:** In the JWT Editor, sign the token using the symmetric key you created in Step 4.
+**Step 5:** Modify the payload as desired (escalate role, change user ID, etc.).
 
-**Step 8:** Send the request.
+**Step 6:** In the JWT Editor tab, click Sign and select the symmetric key you created in Step 3.
 
-### Exploitation — Public Key is Not Exposed
+**Step 7:** Send the request. If the server is vulnerable, it will accept the forged token.
 
-If the public key is not available anywhere, you can **derive it** from two valid JWT tokens signed by the same private key. This is possible because two RSA signatures made with the same private key contain enough mathematical information to recover the public key.
+---
 
-**Step 1:** Log in as a normal user and capture two different JWT tokens. They must be signed by the same key (same `kid` if present).
+### How to Exploit — Public Key is Not Available
 
-**Step 2:** Run PortSwigger's key derivation tool:
+If the public key is not exposed at any endpoint or in the source code, it can be **mathematically derived** from two valid JWT tokens that were signed by the same private key. This works because RSA signatures contain enough mathematical information to recover the public key if you have two samples.
+
+**Step 1:** Log in as a normal user and capture two different JWT tokens. They must be signed by the same key — check that the `kid` value in the header is the same on both, if it is present.
+
+**Step 2:** Run PortSwigger's derivation tool:
 
 ```bash
 docker run --rm -it portswigger/sig2n <token1> <token2>
 ```
 
-This outputs several candidate public keys in both JWK and PEM format.
+The tool outputs several **candidate public keys** in both JWK and PEM format. It gives you multiple candidates because the math can produce a few possible results — only one of them is the real key.
 
-**Step 3:** For each candidate key, create a symmetric key in Burp JWT Editor (as in the exposed-key scenario), sign a test token, and send it to the server.
+**Step 3:** For each candidate key, repeat the exact same steps from the "Public Key is Available" scenario above — convert to Base64, create a symmetric key in Burp, sign a test token, and send it to the server.
 
-**Step 4:** The correct candidate key will produce a token that the server accepts (200 response). Use that key to sign your actual forged token with the privilege-escalation payload.
-
-### Root Cause in Code
-
-```python
-# VULNERABLE — algorithm taken from token header, attacker controls it
-algorithm = jwt.get_unverified_header(token)["alg"]
-jwt.decode(token, public_key, algorithms=[algorithm])
-
-# SECURE — algorithm hardcoded on the server, token header value is irrelevant
-jwt.decode(token, public_key, algorithms=["RS256"])
-```
-
-The fix is a single line change. The algorithm must never come from user-controlled input.
+**Step 4:** Most candidates will return a 401 or 403. The correct key will return a 200. Once you find it, use that key to sign your actual forged token with the privilege-escalation payload.
 
 ---
 
@@ -864,4 +883,3 @@ For developers fixing JWT implementations:
 ---
 
 *Written as part of a structured penetration testing learning path. All techniques practiced in authorized lab environments (PortSwigger Web Security Academy) and applied to authorized bug bounty programs.*
-...
