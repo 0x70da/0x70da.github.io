@@ -1,6 +1,6 @@
 ---
 layout: default
-title: "Your New Writeup Title"
+title: "JWT Attacks — Complete Web Security Writeup"
 date: 2026-04-13
 tags: [security, writeup, bugbounty, jwt]
 author: "0x70da"
